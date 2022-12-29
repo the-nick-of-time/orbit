@@ -14,7 +14,7 @@ class EllipticalOrbit:
                  period: days, epoch_position: degrees):
         self.inclination = inclination.to_radians()
         self.eccentricity = eccentricity
-        self.orbited_mass = M
+        self.orbited_mass = M.to_kilograms()
         self.raan = raan.to_radians()
         self.arg_periapsis = arg_periapsis.to_radians()
         self.period = period.to_seconds()
@@ -77,18 +77,15 @@ class EllipticalOrbit:
             thetastar = angle.to_radians()
         else:
             thetastar = angle
-        distance = self.p / (1 + self.eccentricity * cos(thetastar))
-        r = np.array([distance, meters(0), meters(0)])
-        vr = (self.mu / self.angular_momentum_mag) * self.eccentricity * sin(thetastar)
-        vtheta = (self.mu / self.angular_momentum_mag) * (1 + self.eccentricity * cos(thetastar))
+        p = float(self.p.to_meters().value)
+        mu = float(self.mu.to_meters_cubed_per_second_squared().value)
+        h = float(self.angular_momentum_mag.to_meters_squared_per_second().value)
+        distance = p / (1 + self.eccentricity * cos(thetastar))
+        r = np.array([distance, 0, 0])
+        vr = (mu / h) * self.eccentricity * sin(thetastar)
+        vtheta = (mu / h) * (1 + self.eccentricity * cos(thetastar))
         v = np.array([vr, vtheta, meters(0) / seconds(1)])
         return r.reshape((3, 1)), v.reshape((3, 1))
-
-    def eval_unitless(self, angle):
-        r, v = self.evaluate(angle)
-        r = np.vectorize(lambda k: float(k.to_meters().value))(r)
-        v = np.vectorize(lambda k: float(k.to_meters_per_second().value))(v)
-        return r, v
 
     def find_angle(self, time_since_periapsis: days):
         # See Orbital Mechanics for Engineers eq. 3.17
@@ -144,7 +141,7 @@ class Body:
         lon = lon.to_radians()
         direction = np.array([cos(lat) * cos(lon), cos(lat) * sin(lon), sin(lat)]).reshape((3, 1))
         # Currently can't go the other direction since unit multiplication can't handle its end
-        return direction * self.radius
+        return strip_units(meters)(direction * self.radius)
 
 
 def newtons_method(f, fprime, x0):
@@ -156,6 +153,14 @@ def newtons_method(f, fprime, x0):
         if abs(delta) < eps:
             return x
     raise ValueError("Could not converge in 100 iterations, probably a problem")
+
+
+def strip_units(unit):
+    def stripper(v):
+        converter = getattr(v, "to_" + unit.__name__)
+        return float(converter().value)
+
+    return np.vectorize(stripper)
 
 
 if __name__ == '__main__':
