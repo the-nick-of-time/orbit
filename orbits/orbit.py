@@ -105,6 +105,9 @@ class Body:
     def volume(self):
         return (4 / 3) * pi * self.radius ** 3
 
+    def roche_limit(self, satellite: 'Body'):
+        return self.radius * float(2 * self.density / satellite.density) ** Fraction(1, 3)
+
 
 def newtons_method(f, fprime, x0):
     eps = 1e-6
