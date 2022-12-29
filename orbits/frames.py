@@ -38,14 +38,17 @@ def _get_vector(transform, **params) -> np.ndarray:
 
 
 class FrameSystem(nx.DiGraph):
-    def add_frame(self, name, parent=None, rotation=None, translation=None, inv_translation=None):
+    def add_frame(self, name, parent=None, rotation=None, translation=None, inv_translation=None, default_units=None):
         # translation is expressed in the parent frame and is a vector from parent to child
         # inv_translation is also vector from parent to child, but in the child frame
         self.add_node(name)
         if not parent or not rotation:
             return
         if translation is None and inv_translation is None:
-            translation = _get_vector([0, 0, 0])
+            if default_units:
+                translation = _get_vector([default_units(0), default_units(0), default_units(0)])
+            else:
+                translation = _get_vector([0, 0, 0])
         if translation is not None:
             # translation = lambda **p: _get_vector(translation, **p)
             inverse_translation = lambda **p: _get_dcm(rotation, **p) @ -_get_vector(translation, **p)
@@ -58,10 +61,10 @@ class FrameSystem(nx.DiGraph):
         inverse_rotation = lambda **p: _get_dcm(rotation, **p).transpose()
         self.add_edge(name, parent, tr=inverse_translation, rot=inverse_rotation)
 
-    def transform(self, a, b, **params):
+    def transform(self, a, b, default_units=float, **params):
         path = nx.shortest_path(self, a, b)
         rotation = np.identity(3)
-        translation = np.zeros((3, 1))
+        translation = np.array([default_units(0), default_units(0), default_units(0)]).reshape((3, 1))
         for edge in zip(path[:-1], path[1:]):
             attrs = self.get_edge_data(*edge)
             matrix = _get_dcm(attrs["rot"], **params)
@@ -72,6 +75,7 @@ class FrameSystem(nx.DiGraph):
 
 
 def obs_angles(r):
+    r = np.vectorize(lambda k: float(k.to_meters().value))(r)
     azimuth = atan2(r[2], r[1])
     altitude = atan2(r[0], sqrt(r[2] ** 2 + r[1] ** 2))
     return altitude, azimuth
