@@ -101,6 +101,13 @@ class EllipticalOrbit:
         arg = ecc * tan(ecc_anomaly / 2)
         return 2 * atan(arg)
 
+    def find_time(self, theta: float):
+        ecc = sqrt((1 - self.eccentricity) / (1 + self.eccentricity))
+        E = 2 * atan(ecc * tan(theta / 2))
+        n = 2 * pi / self.period.to_seconds()
+        dt = (E - self.eccentricity * sin(E)) / n
+        return dt
+
 
 class Body:
     def __init__(self, precession: degrees, tilt: degrees, epoch_spin: degrees, mass=None, radius=None, density=None,
@@ -133,6 +140,8 @@ class Body:
         return self.radius * float(2 * self.density / satellite.density) ** Fraction(1, 3)
 
     def surface(self, lat: degrees, lon: degrees):
+        lat = lat.to_radians()
+        lon = lon.to_radians()
         direction = np.array([cos(lat) * cos(lon), cos(lat) * sin(lon), sin(lat)]).reshape((3, 1))
         # Currently can't go the other direction since unit multiplication can't handle its end
         return direction * self.radius
