@@ -12,13 +12,14 @@ from pyunitx.time import days, seconds
 
 class EllipticalOrbit:
     def __init__(self, inclination: degrees, eccentricity, M: kilograms, raan: degrees, arg_periapsis: degrees,
-                 period: days):
+                 period: days, epoch_position: degrees):
         self.inclination = inclination.to_radians()
         self.eccentricity = eccentricity
         self.orbited_mass = M
         self.raan = raan.to_radians()
         self.arg_periapsis = arg_periapsis.to_radians()
         self.period = period.to_seconds()
+        self.epoch_position = epoch_position.to_radians()
 
     @cproperty
     def periapsis(self):
@@ -82,8 +83,11 @@ class EllipticalOrbit:
 
 
 class Body:
-    def __init__(self, tilt, mass=None, radius=None, density=None, circumference=None):
+    def __init__(self, precession: degrees, tilt: degrees, epoch_spin: degrees, mass=None, radius=None, density=None,
+                 circumference=None):
+        self.precession = precession.to_radians()
         self.tilt = tilt.to_radians()
+        self.epoch_spin = epoch_spin.to_radians()
         if radius:
             self.radius = radius
             self.circumference = 2 * pi * radius
@@ -107,6 +111,11 @@ class Body:
 
     def roche_limit(self, satellite: 'Body'):
         return self.radius * float(2 * self.density / satellite.density) ** Fraction(1, 3)
+
+    def surface(self, lat: degrees, lon: degrees):
+        direction = np.array([cos(lat) * cos(lon), cos(lat) * sin(lon), sin(lat)]).reshape((3, 1))
+        # Currently can't go the other direction since unit multiplication can't handle its end
+        return direction * self.radius
 
 
 def newtons_method(f, fprime, x0):
