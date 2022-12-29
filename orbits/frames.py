@@ -1,5 +1,6 @@
 from math import sin, cos, atan2, sqrt
 
+import networkx
 import networkx as nx
 import numpy as np
 
@@ -37,11 +38,14 @@ def _get_vector(transform, **params) -> np.ndarray:
     return vec.reshape((3, 1))
 
 
-class FrameSystem(nx.DiGraph):
+class FrameSystem:
+    def __init__(self):
+        self.graph = nx.DiGraph()
+
     def add_frame(self, name, parent=None, rotation=None, translation=None, inv_translation=None, default_units=None):
         # translation is expressed in the parent frame and is a vector from parent to child
         # inv_translation is also vector from parent to child, but in the child frame
-        self.add_node(name)
+        self.graph.add_node(name)
         if not parent or not rotation:
             return
         if translation is None and inv_translation is None:
@@ -57,16 +61,16 @@ class FrameSystem(nx.DiGraph):
             translation = lambda **p: _get_dcm(rotation, **p).transpose() @ _get_vector(inv_translation, **p)
         else:
             raise ValueError("Must have none or exactly one of translation and inv_translation")
-        self.add_edge(parent, name, tr=translation, rot=rotation)
+        self.graph.add_edge(parent, name, tr=translation, rot=rotation)
         inverse_rotation = lambda **p: _get_dcm(rotation, **p).transpose()
-        self.add_edge(name, parent, tr=inverse_translation, rot=inverse_rotation)
+        self.graph.add_edge(name, parent, tr=inverse_translation, rot=inverse_rotation)
 
     def transform(self, a, b, default_units=float, **params):
-        path = nx.shortest_path(self, a, b)
+        path = nx.shortest_path(self.graph, a, b)
         rotation = np.identity(3)
         translation = np.array([default_units(0), default_units(0), default_units(0)]).reshape((3, 1))
         for edge in zip(path[:-1], path[1:]):
-            attrs = self.get_edge_data(*edge)
+            attrs = self.graph.get_edge_data(*edge)
             matrix = _get_dcm(attrs["rot"], **params)
             translate = _get_vector(attrs["tr"], **params)
             translation = matrix @ (translate + translation)
