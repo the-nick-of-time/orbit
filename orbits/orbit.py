@@ -2,7 +2,6 @@ from fractions import Fraction
 from math import pi, cos, sin, atan, sqrt, tan
 
 import numpy as np
-from cproperty import cproperty
 from pyunitx.angle import degrees
 from pyunitx.constants import G
 from pyunitx.length import meters
@@ -20,35 +19,56 @@ class EllipticalOrbit:
         self.arg_periapsis = arg_periapsis.to_radians()
         self.period = period.to_seconds()
         self.epoch_position = epoch_position.to_radians()
+        self._periapsis = None
+        self._apoapsis = None
+        self._semimajor = None
+        self._semiminor = None
+        self._mu = None
+        self._angular_momentum_mag = None
+        self._p = None
 
-    @cproperty
+    @property
     def periapsis(self):
-        return self.semimajor * (1 - self.eccentricity)
+        if self._periapsis is None:
+            self._periapsis = self.semimajor * (1 - self.eccentricity)
+        return self._periapsis
 
-    @cproperty
+    @property
     def apoapsis(self):
-        return self.semimajor * (1 + self.eccentricity)
+        if self._apoapsis is None:
+            self._apoapsis = self.semimajor * (1 + self.eccentricity)
+        return self._apoapsis
 
-    @cproperty
+    @property
     def semimajor(self):
-        norm = self.period / (2 * pi)
-        return (self.mu * norm ** 2) ** Fraction(1, 3)
+        if self._semimajor is None:
+            norm = self.period / (2 * pi)
+            self._semimajor = (self.mu * norm ** 2) ** Fraction(1, 3)
+        return self._semimajor
 
-    @cproperty
+    @property
     def semiminor(self):
-        return self.semimajor * sqrt(1 - self.eccentricity ** 2)
+        if self._semiminor is None:
+            self._semiminor = self.semimajor * sqrt(1 - self.eccentricity ** 2)
+        return self._semiminor
 
-    @cproperty
+    @property
     def mu(self):
-        return G * self.orbited_mass
+        if self._mu is None:
+            self._mu = G * self.orbited_mass
+        return self._mu
 
-    @cproperty
+    @property
     def angular_momentum_mag(self):
-        return (self.mu * self.semimajor * (1 - self.eccentricity ** 2)) ** Fraction(1, 2)
+        if self._angular_momentum_mag is None:
+            self._angular_momentum_mag = (self.mu * self.semimajor * (1 - self.eccentricity ** 2)) ** Fraction(1, 2)
+        return self._angular_momentum_mag
 
-    @cproperty
+    @property
     def p(self):
-        return self.periapsis * (1 + self.eccentricity)
+        if self._p is None:
+            self._p = self.periapsis * (1 + self.eccentricity)
+        return self._p
 
     def evaluate(self, angle):
         # Returns (_r,_v) in body-pointed frame [r,theta]
