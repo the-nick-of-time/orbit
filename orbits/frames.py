@@ -88,5 +88,6 @@ def obs_angles(r):
 def altitude(r):
     return atan2(r[0], sqrt(r[2] ** 2 + r[1] ** 2))
 
+
 def azimuth(r):
     return atan2(r[2], r[1])

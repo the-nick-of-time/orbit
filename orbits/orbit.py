@@ -7,6 +7,7 @@ from pyunitx.constants import G
 from pyunitx.length import meters
 from pyunitx.mass import kilograms
 from pyunitx.time import days, seconds
+from frames import rotations
 
 
 class EllipticalOrbit:
@@ -84,7 +85,7 @@ class EllipticalOrbit:
         r = np.array([distance, 0, 0])
         vr = (mu / h) * self.eccentricity * sin(thetastar)
         vtheta = (mu / h) * (1 + self.eccentricity * cos(thetastar))
-        v = np.array([vr, vtheta, meters(0) / seconds(1)])
+        v = np.array([vr, vtheta, 0])
         return r.reshape((3, 1)), v.reshape((3, 1))
 
     def find_angle(self, time_since_periapsis: days):
