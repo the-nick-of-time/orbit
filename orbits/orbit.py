@@ -73,8 +73,7 @@ class EllipticalOrbit:
         return self._p
 
     def evaluate(self, angle):
-        # Returns (_r,_v) in body-pointed frame [r,theta]
-        # Which is a rotation by angle around 3 from the central object's frame
+        # Returns (_r,_v) in central object frame
         if isinstance(angle, degrees):
             thetastar = angle.to_radians()
         else:
@@ -87,8 +86,8 @@ class EllipticalOrbit:
         vr = (mu / h) * self.eccentricity * sin(thetastar)
         vtheta = (mu / h) * (1 + self.eccentricity * cos(thetastar))
         v = np.array([vr, vtheta, 0])
-        Rbp = rotations([(3, thetastar)]).transpose()
-        return Rbp @ r.reshape((3, 1)), Rbp @ v.reshape((3, 1))
+        Rbc = rotations([(3, thetastar)]).transpose()
+        return Rbc @ r.reshape((3, 1)), Rbc @ v.reshape((3, 1))
 
     def find_angle(self, time_since_periapsis: days):
         # See Orbital Mechanics for Engineers eq. 3.17
@@ -100,7 +99,7 @@ class EllipticalOrbit:
             lambda E: E - self.eccentricity * sin(E) - Me,
             lambda E: 1 - self.eccentricity * cos(E),
             pi / 2
-            )
+        )
         ecc = sqrt((1 + self.eccentricity) / (1 - self.eccentricity))
         arg = ecc * tan(ecc_anomaly / 2)
         return 2 * atan(arg)
@@ -154,8 +153,7 @@ class Body:
         return strip_units(meters)(direction * self.radius)
 
 
-def newtons_method(f, fprime, x0):
-    eps = 1e-6
+def newtons_method(f, fprime, x0, eps=1e-6):
     x = x0
     for i in range(100):
         delta = f(x) / fprime(x)
@@ -163,6 +161,27 @@ def newtons_method(f, fprime, x0):
         if abs(delta) < eps:
             return x
     raise ValueError("Could not converge in 100 iterations, probably a problem")
+
+
+def mean(a, b):
+    return (a + b) / 2
+
+
+def sign(x):
+    return -1 if x < 0 else 1 if x > 0 else 0
+
+
+def bracket_zero(f, floor, ceil):
+    eps = 1e-6
+    x = mean(floor, ceil)
+    if sign(f(floor)) * sign(f(ceil)) != -1:
+        raise ValueError("There must be one zero crossing in the range")
+    while abs(f(x)) > eps:
+        if sign(f(x)) == sign(f(ceil)):
+            floor, ceil = floor, mean(floor, ceil)
+        else:
+            floor, ceil = mean(floor, ceil), ceil
+    return x
 
 
 def strip_units(unit):
