@@ -1,6 +1,5 @@
 from math import sin, cos, atan2, sqrt
 
-import networkx
 import networkx as nx
 import numpy as np
 

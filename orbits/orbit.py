@@ -6,7 +6,8 @@ from pyunitx.angle import degrees
 from pyunitx.constants import G
 from pyunitx.length import meters
 from pyunitx.mass import kilograms
-from pyunitx.time import days, seconds
+from pyunitx.time import days
+
 from frames import rotations
 
 
@@ -95,9 +96,11 @@ class EllipticalOrbit:
         if self.eccentricity == 0:
             return n * time_since_periapsis.to_seconds()
         Me = float(n * time_since_periapsis.to_seconds())
-        ecc_anomaly = newtons_method(lambda E: E - self.eccentricity * sin(E) - Me,
-                                     lambda E: 1 - self.eccentricity * cos(E),
-                                     pi / 2)
+        ecc_anomaly = newtons_method(
+            lambda E: E - self.eccentricity * sin(E) - Me,
+            lambda E: 1 - self.eccentricity * cos(E),
+            pi / 2
+            )
         ecc = sqrt((1 + self.eccentricity) / (1 - self.eccentricity))
         arg = ecc * tan(ecc_anomaly / 2)
         return 2 * atan(arg)
@@ -113,11 +116,12 @@ class EllipticalOrbit:
 
 
 class Body:
-    def __init__(self, precession: degrees, tilt: degrees, epoch_spin: degrees, mass=None, radius=None, density=None,
-                 circumference=None):
+    def __init__(self, precession: degrees, tilt: degrees, epoch_spin: degrees, spin_rate, mass=None, radius=None,
+                 density=None, circumference=None):
         self.precession = precession.to_radians()
         self.tilt = tilt.to_radians()
         self.epoch_spin = epoch_spin.to_radians()
+        self.spin_rate = spin_rate.to_hertz()  # really rad/s
         if radius:
             self.radius = radius
             self.circumference = 2 * pi * radius
