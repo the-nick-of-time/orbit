@@ -77,13 +77,6 @@ class FrameSystem:
         return rotation, translation
 
 
-def obs_angles(r):
-    r = np.vectorize(lambda k: float(k.to_meters().value))(r)
-    azimuth = atan2(r[2], r[1])
-    altitude = atan2(r[0], sqrt(r[2] ** 2 + r[1] ** 2))
-    return altitude, azimuth
-
-
 def altitude(r):
     return atan2(r[0], sqrt(r[2] ** 2 + r[1] ** 2))
 
