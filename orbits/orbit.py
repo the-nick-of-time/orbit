@@ -86,11 +86,14 @@ class EllipticalOrbit:
         vr = (mu / h) * self.eccentricity * sin(thetastar)
         vtheta = (mu / h) * (1 + self.eccentricity * cos(thetastar))
         v = np.array([vr, vtheta, 0])
-        return r.reshape((3, 1)), v.reshape((3, 1))
+        Rbp = rotations([(3, thetastar)]).transpose()
+        return Rbp @ r.reshape((3, 1)), Rbp @ v.reshape((3, 1))
 
     def find_angle(self, time_since_periapsis: days):
         # See Orbital Mechanics for Engineers eq. 3.17
         n = 2 * pi / self.period.to_seconds()
+        if self.eccentricity == 0:
+            return n * time_since_periapsis.to_seconds()
         Me = float(n * time_since_periapsis.to_seconds())
         ecc_anomaly = newtons_method(lambda E: E - self.eccentricity * sin(E) - Me,
                                      lambda E: 1 - self.eccentricity * cos(E),
@@ -100,9 +103,11 @@ class EllipticalOrbit:
         return 2 * atan(arg)
 
     def find_time(self, theta: float):
+        n = 2 * pi / self.period.to_seconds()
+        if self.eccentricity == 0:
+            return theta / n
         ecc = sqrt((1 - self.eccentricity) / (1 + self.eccentricity))
         E = 2 * atan(ecc * tan(theta / 2))
-        n = 2 * pi / self.period.to_seconds()
         dt = (E - self.eccentricity * sin(E)) / n
         return dt
 
