@@ -9,7 +9,7 @@ from pyunitx.mass import kilograms
 from pyunitx.time import days
 
 from frames import rotations
-from orbits.solvers import newtons_method
+from solvers import newtons_method
 
 
 class EllipticalOrbit:
