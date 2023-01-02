@@ -143,6 +143,10 @@ class Body:
     def volume(self):
         return (4 / 3) * pi * self.radius ** 3
 
+    @property
+    def gravity(self):
+        return G * self.mass * self.volume / self.radius ** 2
+
     def roche_limit(self, satellite: 'Body'):
         return self.radius * float(2 * self.density / satellite.density) ** Fraction(1, 3)
 
