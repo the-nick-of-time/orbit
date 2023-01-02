@@ -1,4 +1,5 @@
 from fractions import Fraction
+from functools import cached_property
 from math import pi, cos, sin, atan, sqrt, tan
 
 import numpy as np
@@ -22,56 +23,35 @@ class EllipticalOrbit:
         self.arg_periapsis = arg_periapsis.to_radians()
         self.period = period.to_seconds()
         self.epoch_position = epoch_position.to_radians()
-        self._periapsis = None
-        self._apoapsis = None
-        self._semimajor = None
-        self._semiminor = None
-        self._mu = None
-        self._angular_momentum_mag = None
-        self._p = None
 
-    @property
+    @cached_property
     def periapsis(self):
-        if self._periapsis is None:
-            self._periapsis = self.semimajor * (1 - self.eccentricity)
-        return self._periapsis
+        return self.semimajor * (1 - self.eccentricity)
 
-    @property
+    @cached_property
     def apoapsis(self):
-        if self._apoapsis is None:
-            self._apoapsis = self.semimajor * (1 + self.eccentricity)
-        return self._apoapsis
+        return self.semimajor * (1 + self.eccentricity)
 
-    @property
+    @cached_property
     def semimajor(self):
-        if self._semimajor is None:
-            norm = self.period / (2 * pi)
-            self._semimajor = (self.mu * norm ** 2) ** Fraction(1, 3)
-        return self._semimajor
+        norm = self.period / (2 * pi)
+        return (self.mu * norm ** 2) ** Fraction(1, 3)
 
-    @property
+    @cached_property
     def semiminor(self):
-        if self._semiminor is None:
-            self._semiminor = self.semimajor * sqrt(1 - self.eccentricity ** 2)
-        return self._semiminor
+        return self.semimajor * sqrt(1 - self.eccentricity ** 2)
 
-    @property
+    @cached_property
     def mu(self):
-        if self._mu is None:
-            self._mu = G * self.orbited_mass
-        return self._mu
+        return G * self.orbited_mass
 
-    @property
+    @cached_property
     def angular_momentum_mag(self):
-        if self._angular_momentum_mag is None:
-            self._angular_momentum_mag = (self.mu * self.semimajor * (1 - self.eccentricity ** 2)) ** Fraction(1, 2)
-        return self._angular_momentum_mag
+        return (self.mu * self.semimajor * (1 - self.eccentricity ** 2)) ** Fraction(1, 2)
 
-    @property
+    @cached_property
     def p(self):
-        if self._p is None:
-            self._p = self.periapsis * (1 + self.eccentricity)
-        return self._p
+        return self.periapsis * (1 + self.eccentricity)
 
     def evaluate(self, angle):
         # Returns (_r,_v) in central object frame
@@ -139,7 +119,7 @@ class Body:
         else:
             raise ValueError("Must have exactly one of mass/density")
 
-    @property
+    @cached_property
     def volume(self):
         return (4 / 3) * pi * self.radius ** 3
 
@@ -164,21 +144,3 @@ def strip_units(unit):
         return float(converter().value)
 
     return np.vectorize(stripper)
-
-
-if __name__ == '__main__':
-    moon1 = EllipticalOrbit(
-        inclination=degrees(72),
-        period=days(13.37),
-        raan=degrees(58),
-        arg_periapsis=degrees(121),
-        eccentricity=0.133,
-        M=kilograms("3.33469e24")
-    )
-    print(moon1.semimajor, moon1.semiminor, moon1.periapsis, moon1.apoapsis)
-    th = moon1.find_angle(days(0))
-    print(th, moon1.evaluate(th))
-    th = moon1.find_angle(days(4))
-    print(th, moon1.evaluate(th))
-    th = moon1.find_angle(days(13.37 / 2))
-    print(th, moon1.evaluate(th))
