@@ -41,7 +41,7 @@ class FrameSystem:
     def __init__(self):
         self.graph = nx.DiGraph()
 
-    def add_frame(self, name, parent=None, rotation=None, translation=None, inv_translation=None, default_units=None):
+    def add_frame(self, name, parent=None, rotation=None, translation=None, inv_translation=None):
         # translation is expressed in the parent frame and is a vector from parent to child
         # inv_translation is also vector from parent to child, but in the child frame
         self.graph.add_node(name)
@@ -52,10 +52,7 @@ class FrameSystem:
             self.graph.add_edge(name, parent, tr=_get_vector([0, 0, 0]), rot=np.identity(3))
             return
         if translation is None and inv_translation is None:
-            if default_units:
-                translation = _get_vector([default_units(0), default_units(0), default_units(0)])
-            else:
-                translation = _get_vector([0, 0, 0])
+            translation = _get_vector([0, 0, 0])
         if translation is not None:
             # translation = lambda **p: _get_vector(translation, **p)
             inverse_translation = lambda **p: _get_dcm(rotation, **p) @ -_get_vector(translation, **p)
