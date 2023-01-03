@@ -45,7 +45,11 @@ class FrameSystem:
         # translation is expressed in the parent frame and is a vector from parent to child
         # inv_translation is also vector from parent to child, but in the child frame
         self.graph.add_node(name)
-        if not parent or not rotation:
+        if not parent:
+            return
+        if not rotation and not translation:
+            self.graph.add_edge(parent, name, tr=_get_vector([0, 0, 0]), rot=np.identity(3))
+            self.graph.add_edge(name, parent, tr=_get_vector([0, 0, 0]), rot=np.identity(3))
             return
         if translation is None and inv_translation is None:
             if default_units:
