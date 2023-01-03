@@ -102,30 +102,49 @@ class Body:
         self.tilt = tilt.to_radians()
         self.epoch_spin = epoch_spin.to_radians()
         self.spin_rate = spin_rate.to_hertz()  # really rad/s
-        if radius:
-            self.radius = radius
-            self.circumference = 2 * pi * radius
-        elif circumference:
-            self.circumference = circumference
-            self.radius = circumference / (2 * pi)
-        else:
-            raise ValueError("Must have exactly one of radius/circumference")
-        if mass:
-            self.mass = mass
-            self.density = mass / self.volume
-        elif density:
-            self.density = density
-            self.mass = self.volume * density
-        else:
-            raise ValueError("Must have exactly one of mass/density")
+        self._radius = radius
+        self._circumference = circumference
+        self._mass = mass
+        self._density = density
+
+    @cached_property
+    def radius(self):
+        if self._radius:
+            return self._radius
+        if self.circumference:
+            return self.circumference / (2 * pi)
+        if self.mass and self.density:
+            volume = self.mass / self.density
+            return (volume * (3 / 4) / pi) ** Fraction(1, 3)
+
+    @cached_property
+    def circumference(self):
+        if self._circumference:
+            return self._circumference
+        if self.radius:
+            return 2 * pi * self.radius
+
+    @cached_property
+    def mass(self):
+        if self._mass:
+            return self._mass
+        if self.density:
+            return self.volume * self.density
+
+    @cached_property
+    def density(self):
+        if self._density:
+            return self._density
+        if self.mass:
+            return self.mass / self.volume
 
     @cached_property
     def volume(self):
         return (4 / 3) * pi * self.radius ** 3
 
-    @property
+    @cached_property
     def gravity(self):
-        return G * self.mass * self.volume / self.radius ** 2
+        return G * self.mass / self.radius ** 2
 
     def roche_limit(self, satellite: 'Body'):
         return self.radius * float(2 * self.density / satellite.density) ** Fraction(1, 3)
