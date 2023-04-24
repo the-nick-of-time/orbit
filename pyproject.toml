@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "orbit"
+name = "orbits"
 version = "0.1.0"
 description = "Simulate simple orbits and the associated reference frame transformations"
 authors = ["Nick Thurmes <nthurmes@gmail.com>"]
@@ -13,6 +13,16 @@ pyunitx = "^0.10.0"
 networkx = "^3.1"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = [
+    "-v",
+    "-rP"
+]
+pythonpath = "."
