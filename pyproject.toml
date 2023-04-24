@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "orbit"
+version = "0.1.0"
+description = "Simulate simple orbits and the associated reference frame transformations"
+authors = ["Nick Thurmes <nthurmes@gmail.com>"]
+license = "gpt-v3-or-later"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.24.3"
+pyunitx = "^0.10.0"
+networkx = "^3.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
